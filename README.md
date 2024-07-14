@@ -20,13 +20,13 @@ The following softwares is required by this script
 To use the script, the following command can be used:
 
 ```sh
-python3 mergerfs-cache-mover.py /path/to/CACHE /path/to/BACKING_POOL 0.5
+python3 percent-cache-mover.py /path/to/CACHE /path/to/BACKING_POOL 0.5
 ```
 
 Full options of the scripts are as follows:
 
 ```sh
-usage: mergerfs-cache-mover.py [-h] [--metadata METADATA] [--audit] [--log_level LOG_LEVEL] [--log_file LOG_FILE] cache backing threshold
+usage: percent-cache-mover.py [-h] [--metadata METADATA] [--audit] [--log_level LOG_LEVEL] [--log_file LOG_FILE] cache backing threshold
 
 mergerfs percent cache mover with snapshot awareness
 
