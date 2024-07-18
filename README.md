@@ -11,7 +11,9 @@ As a result, the original tool will cause all files to be moved from cache disk 
 This tool is made to tackle this issue by being aware of the snapshots and live disk usage. The script will moves non-snapshotted files to the backing pool, followed by snapshotted files (sorted by atime) till the threshold is met.
 
 ## Requirements
+
 The following softwares is required by this script
+
 - python3
 - rsync
 
@@ -26,7 +28,7 @@ python3 percent-cache-mover.py /path/to/CACHE /path/to/BACKING_POOL 0.5
 Full options of the scripts are as follows:
 
 ```sh
-usage: percent-cache-mover.py [-h] [--metadata METADATA] [--audit] [--log_level LOG_LEVEL] [--log_file LOG_FILE] cache backing threshold
+usage: percent-cache-mover.py [-h] [--metadata METADATA] [--audit] [--stale STALE] [--log_level LOG_LEVEL] [--log_file LOG_FILE] cache backing threshold
 
 mergerfs percent cache mover with snapshot awareness
 
@@ -39,6 +41,7 @@ options:
   -h, --help            show this help message and exit
   --metadata METADATA   path to metadata file, used to cache snapshot files information
   --audit               enable audit mode (i.e. do not move files)
+  --stale STALE         Move additional files that is not accessed in {STALE} days in snapshots. Set value > 0 to enable
   --log_level LOG_LEVEL
                         set logging level
   --log_file LOG_FILE   set logfile path
