@@ -105,35 +105,32 @@ def update_metadata(cache_pool: str, metadata: dict):
 def get_filelists(metadata, stale_days=-1):
     latest_snap_num = max(metadata)
 
-    live_in_snap = []
-    live_not_in_snap = []
-    stale_files_in_snap = []
+    in_snap = []
+    not_in_snap = []
+    stale_files = []
 
     for fp in metadata["0"]["files"]:
         o = (fp, metadata["0"]["files"][fp])
 
         fp_snap = fp.replace(metadata["0"]["root"], metadata[latest_snap_num]["root"])
 
+        if stale_days > 0:
+            atime_dt = datetime.datetime.fromtimestamp(metadata["0"]["files"][fp][7])
+            stale_dt = datetime.datetime.now() - datetime.timedelta(days=stale_days)
+            if atime_dt < stale_dt:
+                stale_files.append(o)
+
         if fp_snap in metadata[latest_snap_num]["files"]:
-            live_in_snap.append(o)
-
-            if stale_days > 0:
-                atime_dt = datetime.datetime.fromtimestamp(
-                    metadata["0"]["files"][fp][7]
-                )
-                stale_dt = datetime.datetime.now() - datetime.timedelta(days=stale_days)
-                if atime_dt < stale_dt:
-                    stale_files_in_snap.append(o)
-
+            in_snap.append(o)
         else:
-            live_not_in_snap.append(o)
+            not_in_snap.append(o)
 
     # sort by atime
     atime_key = lambda t: t[1][7]
-    live_not_in_snap = sorted(live_not_in_snap, key=atime_key)
-    live_in_snap = sorted(live_in_snap, key=atime_key)
+    not_in_snap = sorted(not_in_snap, key=atime_key)
+    in_snap = sorted(in_snap, key=atime_key)
 
-    return live_not_in_snap, live_in_snap, stale_files_in_snap
+    return not_in_snap, in_snap, stale_files
 
 
 def rsync_move(cache, backing, live_fp, audit_mode=False) -> bool:
@@ -223,14 +220,12 @@ def main(
         )
         exit(0)
 
-    live_not_in_snap, live_in_snap, stale_in_snap = get_filelists(
-        metadata, stale_atime_days
-    )
-    logging.info(f"Found {len(live_not_in_snap)} files not in latest snapshot")
-    logging.info(f"Found {len(live_in_snap)} files in latest snapshot")
-    logging.info(f"Found {len(stale_in_snap)} stale files in snapshot")
+    not_in_snap, in_snap, stale_files = get_filelists(metadata, stale_atime_days)
+    logging.info(f"Found {len(not_in_snap)} files not in latest snapshot")
+    logging.info(f"Found {len(in_snap)} files in latest snapshot")
+    logging.info(f"Found {len(stale_files)} stale files in snapshot")
 
-    live_files = live_not_in_snap + live_in_snap
+    live_files = not_in_snap + in_snap
 
     ratio = live_size / total_size
     logging.info(f"Moving lives files... current usage ({ratio})")
@@ -264,8 +259,8 @@ def main(
     stale_moved_size = 0
     stale_moved_count = 0
 
-    logging.info(f"Moving stale files... current usage ({ratio})")
-    for fp, stats in stale_in_snap:
+    logging.info(f"Moving additional stale files... current usage ({ratio})")
+    for fp, stats in stale_files:
         if rsync_move(cache_pool, backing_pool, fp, audit_mode):
             if metadata["0"]["files"].pop(fp, None) is not None:
                 stale_moved_size += stats[6]  # bytes
@@ -307,7 +302,7 @@ if __name__ == "__main__":
 
     parser.add_argument(
         "--stale",
-        help="Move additional files that is not accessed in {STALE} days in snapshots. Set value > 0 to enable",
+        help="Move additional files that is not accessed in {STALE} days. Set value > 0 to enable",
         type=float,
         default=-1,
     )

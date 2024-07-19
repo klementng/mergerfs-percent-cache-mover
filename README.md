@@ -41,7 +41,7 @@ options:
   -h, --help            show this help message and exit
   --metadata METADATA   path to metadata file, used to cache snapshot files information
   --audit               enable audit mode (i.e. do not move files)
-  --stale STALE         Move additional files that is not accessed in {STALE} days in snapshots. Set value > 0 to enable
+  --stale STALE         Move additional files that is not accessed in {STALE} days. Set value > 0 to enable
   --log_level LOG_LEVEL
                         set logging level
   --log_file LOG_FILE   set logfile path
